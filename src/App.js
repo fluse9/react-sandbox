@@ -91,17 +91,16 @@ const App = () => {
         const removeDuplicates = (data = []) => {
             const seenNames = new Set();
 
-            const uniqueInfluencers =
-                data?.filter((datum) => {
-                    const name = datum?.name ?? '';
-                    const hasNotSeenName = !seenNames?.has(name) ?? false;
+            const uniqueInfluencers = data.filter((datum) => {
+                const name = datum?.name ?? '';
+                const hasNotSeenName = !seenNames?.has(name) ?? false;
 
-                    if (hasNotSeenName) {
-                        seenNames.add(name);
-                    }
+                if (hasNotSeenName) {
+                    seenNames.add(name);
+                }
 
-                    return hasNotSeenName;
-                }) ?? [];
+                return hasNotSeenName;
+            });
 
             return uniqueInfluencers;
         };
