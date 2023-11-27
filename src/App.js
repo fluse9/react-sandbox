@@ -208,8 +208,8 @@ const App = () => {
                 if (dataType === 'string') {
                     sort =
                         order === ASCENDING
-                            ? next[propertyToSortBy].localeCompare(previous[propertyToSortBy])
-                            : previous[propertyToSortBy].localeCompare(next[propertyToSortBy]);
+                            ? previous[propertyToSortBy].localeCompare(next[propertyToSortBy])
+                            : next[propertyToSortBy].localeCompare(previous[propertyToSortBy]);
                 }
 
                 return sort;
