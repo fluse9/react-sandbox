@@ -202,8 +202,8 @@ const App = () => {
                 if (dataType === 'number') {
                     sort =
                         order === ASCENDING
-                            ? next[propertyToSortBy] - previous[propertyToSortBy]
-                            : previous[propertyToSortBy] - next[propertyToSortBy];
+                            ? previous[propertyToSortBy] - next[propertyToSortBy]
+                            : next[propertyToSortBy] - previous[propertyToSortBy];
                 }
                 if (dataType === 'string') {
                     sort =
