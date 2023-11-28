@@ -4,6 +4,7 @@ import Table from './Components/Table';
 import Card from './Components/Card';
 import influencers from '../data/influencers.json';
 import SearchBar from './Components/SearchBar';
+import { filterInfluencersBySearchTerm, paginateData, removeDuplicates } from './utilities';
 
 const ASCENDING = 'ascending';
 const DESCENDING = 'descending';
@@ -49,29 +50,6 @@ const StyledInput = styled.input({
  * @returns {ReactComponentElement} - The rendered application.
  */
 const App = () => {
-    /**
-     * Removes duplicate influencers from the data.
-     *
-     * @param {Influencer[]} data - The list of influencers containing duplicates.
-     * @returns {Influencer[]} - The list of influencers without duplicates.
-     */
-    const removeDuplicates = (data = []) => {
-        const seenNames = new Set();
-
-        const uniqueInfluencers = data.filter((datum) => {
-            const name = datum?.name ?? '';
-            const hasNotSeenName = !seenNames?.has(name) ?? false;
-
-            if (hasNotSeenName) {
-                seenNames.add(name);
-            }
-
-            return hasNotSeenName;
-        });
-
-        return uniqueInfluencers;
-    };
-
     const uniqueInfluencers = removeDuplicates(influencers);
     const maxRowsPerPage = 20;
 
@@ -108,57 +86,17 @@ const App = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        /**
-         * Groups the influencer data into pages using a 2D array.
-         *
-         * @returns {[Influencer[]]} - A 2D array containing the influencers grouped into pages.
-         */
-        const paginateData = () => {
-            const localPaginatedData = [[]];
-            let page = 0;
-
-            filteredInfluencers.forEach((influencer) => {
-                const rowsOnPage = localPaginatedData[page]?.length ?? 0;
-                const pageIsFull = rowsOnPage === maxRowsPerPage;
-
-                if (pageIsFull) {
-                    localPaginatedData.push([]);
-                    page += 1;
-                }
-
-                localPaginatedData[page].push(influencer);
-            });
-
-            return localPaginatedData;
-        };
-
         const totalRows = filteredInfluencers?.length ?? 0;
         const localTotalPages = Math.ceil(totalRows / maxRowsPerPage);
         setTotalPages(localTotalPages);
 
-        const localPaginatedData = paginateData();
+        const localPaginatedData = paginateData(filteredInfluencers, maxRowsPerPage);
         setPaginatedData(localPaginatedData);
     }, [filteredInfluencers]);
 
     useEffect(() => {
-        /**
-         * Filters the influencers shown in the table according to the user entered search term, resetting influencers
-         * if the search term is empty.
-         *
-         * @returns {void}
-         */
-        const filterInfluencersBySearchTerm = () => {
-            if (searchTerm) {
-                const searchedInfluencers = filteredInfluencers.filter(
-                    ({ name = '' }) => name?.includes(searchTerm) ?? false,
-                );
-                setFilteredInfluencers(searchedInfluencers);
-            } else {
-                setFilteredInfluencers(uniqueInfluencers);
-            }
-        };
-
-        filterInfluencersBySearchTerm();
+        const searchedInfluencers = filterInfluencersBySearchTerm(uniqueInfluencers, searchTerm);
+        setFilteredInfluencers(searchedInfluencers);
     }, [searchTerm]);
 
     /**
