@@ -4,7 +4,12 @@ import Table from './Components/Table';
 import Card from './Components/Card';
 import influencers from '../data/influencers.json';
 import SearchBar from './Components/SearchBar';
-import { filterInfluencersBySearchTerm, paginateData, removeDuplicates } from './utilities';
+import {
+    filterInfluencersBySearchTerm,
+    paginateData,
+    removeDuplicates,
+    sortBySelectedColumn,
+} from './utilities';
 
 const ASCENDING = 'ascending';
 const DESCENDING = 'descending';
@@ -142,43 +147,9 @@ const App = () => {
             return toggledColumns;
         };
 
-        /**
-         * Sorts the influencers data by the selected column in the toggled order.
-         *
-         * @param {Object[]} toggledColumns - The list of columns with the selected column's order property toggled to ascending or descending.
-         * @returns {Influencer[]} - The influencers data sorted by the selected column.
-         */
-        const sortBySelectedColumn = (toggledColumns = []) => {
-            const localInfluencers = [...influencers];
-            const { name, order } = toggledColumns[sortIndex] ?? null;
-            const propertyToSortBy = name.toLowerCase();
-
-            const sortedInfluencers = localInfluencers.sort((previous = {}, next = {}) => {
-                const dataType = typeof previous[propertyToSortBy];
-
-                let sort = 0;
-                if (dataType === 'number') {
-                    sort =
-                        order === ASCENDING
-                            ? previous[propertyToSortBy] - next[propertyToSortBy]
-                            : next[propertyToSortBy] - previous[propertyToSortBy];
-                }
-                if (dataType === 'string') {
-                    sort =
-                        order === ASCENDING
-                            ? previous[propertyToSortBy].localeCompare(next[propertyToSortBy])
-                            : next[propertyToSortBy].localeCompare(previous[propertyToSortBy]);
-                }
-
-                return sort;
-            });
-
-            return sortedInfluencers;
-        };
-
         const clearedColumns = clearOtherColumnsOrder();
         const toggledColumns = toggleSelectedColumn(clearedColumns);
-        const sortedInfluencers = sortBySelectedColumn(toggledColumns);
+        const sortedInfluencers = sortBySelectedColumn(influencers, toggledColumns, sortIndex);
 
         setColumns(toggledColumns);
         setFilteredInfluencers(sortedInfluencers);
