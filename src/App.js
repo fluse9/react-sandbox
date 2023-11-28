@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import Table from './Components/Table';
 import Card from './Components/Card';
-import rawInfluencers from '../data/influencers.json';
+import influencers from '../data/influencers.json';
+import SearchBar from './Components/SearchBar';
 
 const ASCENDING = 'ascending';
 const DESCENDING = 'descending';
@@ -48,6 +49,30 @@ const StyledInput = styled.input({
  * @returns {ReactComponentElement} - The rendered application.
  */
 const App = () => {
+    /**
+     * Removes duplicate influencers from the data.
+     *
+     * @param {Influencer[]} data - The list of influencers containing duplicates.
+     * @returns {Influencer[]} - The list of influencers without duplicates.
+     */
+    const removeDuplicates = (data = []) => {
+        const seenNames = new Set();
+
+        const uniqueInfluencers = data.filter((datum) => {
+            const name = datum?.name ?? '';
+            const hasNotSeenName = !seenNames?.has(name) ?? false;
+
+            if (hasNotSeenName) {
+                seenNames.add(name);
+            }
+
+            return hasNotSeenName;
+        });
+
+        return uniqueInfluencers;
+    };
+
+    const uniqueInfluencers = removeDuplicates(influencers);
     const maxRowsPerPage = 20;
 
     const [columns, setColumns] = useState([
@@ -76,46 +101,23 @@ const App = () => {
             order: null,
         },
     ]);
-    const [influencers, setInfluencers] = useState(rawInfluencers);
+    const [filteredInfluencers, setFilteredInfluencers] = useState(uniqueInfluencers);
     const [totalPages, setTotalPages] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [paginatedData, setPaginatedData] = useState([[]]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         /**
-         * Removes duplicate influencers from the data.
-         *
-         * @param {Influencer[]} data - The list of influencers containing duplicates.
-         * @returns {Influencer[]} - The list of influencers without duplicates.
-         */
-        const removeDuplicates = (data = []) => {
-            const seenNames = new Set();
-
-            const uniqueInfluencers = data.filter((datum) => {
-                const name = datum?.name ?? '';
-                const hasNotSeenName = !seenNames?.has(name) ?? false;
-
-                if (hasNotSeenName) {
-                    seenNames.add(name);
-                }
-
-                return hasNotSeenName;
-            });
-
-            return uniqueInfluencers;
-        };
-
-        /**
          * Groups the influencer data into pages using a 2D array.
          *
-         * @param {Influencer[]} uniqueInfluencers - The list of unique influencers with all duplicates removed.
          * @returns {[Influencer[]]} - A 2D array containing the influencers grouped into pages.
          */
-        const paginateData = (uniqueInfluencers = []) => {
+        const paginateData = () => {
             const localPaginatedData = [[]];
             let page = 0;
 
-            uniqueInfluencers.forEach((influencer) => {
+            filteredInfluencers.forEach((influencer) => {
                 const rowsOnPage = localPaginatedData[page]?.length ?? 0;
                 const pageIsFull = rowsOnPage === maxRowsPerPage;
 
@@ -130,15 +132,34 @@ const App = () => {
             return localPaginatedData;
         };
 
-        const uniqueInfluencers = removeDuplicates(influencers);
-
-        const totalRows = uniqueInfluencers?.length ?? 0;
+        const totalRows = filteredInfluencers?.length ?? 0;
         const localTotalPages = Math.ceil(totalRows / maxRowsPerPage);
         setTotalPages(localTotalPages);
 
-        const localPaginatedData = paginateData(uniqueInfluencers);
+        const localPaginatedData = paginateData();
         setPaginatedData(localPaginatedData);
-    }, [influencers]);
+    }, [filteredInfluencers]);
+
+    useEffect(() => {
+        /**
+         * Filters the influencers shown in the table according to the user entered search term, resetting influencers
+         * if the search term is empty.
+         *
+         * @returns {void}
+         */
+        const filterInfluencersBySearchTerm = () => {
+            if (searchTerm) {
+                const searchedInfluencers = filteredInfluencers.filter(
+                    ({ name = '' }) => name?.includes(searchTerm) ?? false,
+                );
+                setFilteredInfluencers(searchedInfluencers);
+            } else {
+                setFilteredInfluencers(uniqueInfluencers);
+            }
+        };
+
+        filterInfluencersBySearchTerm();
+    }, [searchTerm]);
 
     /**
      * Handles the click event for heading cells in the table, sorting the table by the clicked column in ascending or descending order.
@@ -222,7 +243,7 @@ const App = () => {
         const sortedInfluencers = sortBySelectedColumn(toggledColumns);
 
         setColumns(toggledColumns);
-        setInfluencers(sortedInfluencers);
+        setFilteredInfluencers(sortedInfluencers);
     };
 
     /**
@@ -240,6 +261,7 @@ const App = () => {
         <AppContainer>
             <Card>
                 <Heading>Influencers</Heading>
+                <SearchBar setSearchTerm={setSearchTerm} />
                 <Table
                     data={paginatedData[currentPage - 1]}
                     columns={columns}
